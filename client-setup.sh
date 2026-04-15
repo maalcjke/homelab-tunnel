@@ -134,8 +134,8 @@ write_wg_config() {
 [Interface]
 Address    = ${CLIENT_WG_IP}/24
 PrivateKey = ${CLIENT_PRIVKEY}
-PostUp = ip rule add from ${PUBLIC_IP} lookup 77 priority 77; ip route add default via ${VPS_WG_IP} table 77; ip route replace ${endpoint_host}/32 via ${default_gw} dev ${default_iface}
-PostDown = ip rule del from ${PUBLIC_IP} lookup 77 priority 77; ip route del default via ${VPS_WG_IP} table 77 2>/dev/null || true; ip route del ${endpoint_host}/32 via ${default_gw} dev ${default_iface} 2>/dev/null || true
+PostUp = ip rule add from ${CLIENT_WG_IP} lookup 77 priority 77; ip route add default via ${VPS_WG_IP} table 77; ip route replace ${endpoint_host}/32 via ${default_gw} dev ${default_iface}
+PostDown = ip rule del from ${CLIENT_WG_IP} lookup 77 priority 77; ip route del default via ${VPS_WG_IP} table 77 2>/dev/null || true; ip route del ${endpoint_host}/32 via ${default_gw} dev ${default_iface} 2>/dev/null || true
 
 [Peer]
 PublicKey  = ${VPS_PUBLIC_KEY}
