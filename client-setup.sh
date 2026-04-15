@@ -130,26 +130,19 @@ write_wg_config() {
 
     info "Основной шлюз: $default_gw (через $default_iface)"
 
-    cat > "${WG_DIR}/${WG_IFACE}.conf" <<EOT
+    cat > "${WG_DIR}/${WG_IFACE}.conf" <<EOF
 [Interface]
 Address    = ${CLIENT_WG_IP}/24
 PrivateKey = ${CLIENT_PRIVKEY}
-
-# Трафик с проброшенного публичного IP уходит через VPS,
-# а сам handshake WireGuard остаётся через обычный uplink.
-PostUp   = ip rule add from ${PUBLIC_IP} lookup 77 priority 77; \\
-           ip route add default via ${VPS_WG_IP} table 77; \\
-           ip route replace ${endpoint_host}/32 via ${default_gw} dev ${default_iface}
-PostDown = ip rule del from ${PUBLIC_IP} lookup 77 priority 77; \\
-           ip route del default via ${VPS_WG_IP} table 77 2>/dev/null || true; \\
-           ip route del ${endpoint_host}/32 via ${default_gw} dev ${default_iface} 2>/dev/null || true
+PostUp = ip rule add from ${PUBLIC_IP} lookup 77 priority 77; ip route add default via ${VPS_WG_IP} table 77; ip route replace ${endpoint_host}/32 via ${default_gw} dev ${default_iface}
+PostDown = ip rule del from ${PUBLIC_IP} lookup 77 priority 77; ip route del default via ${VPS_WG_IP} table 77 2>/dev/null || true; ip route del ${endpoint_host}/32 via ${default_gw} dev ${default_iface} 2>/dev/null || true
 
 [Peer]
 PublicKey  = ${VPS_PUBLIC_KEY}
 Endpoint   = ${VPS_ENDPOINT}
 AllowedIPs = ${VPS_WG_IP}/32, 10.77.0.0/24
 PersistentKeepalive = 25
-EOT
+EOF
 
     chmod 600 "${WG_DIR}/${WG_IFACE}.conf"
     success "Конфиг записан: ${WG_DIR}/${WG_IFACE}.conf"
