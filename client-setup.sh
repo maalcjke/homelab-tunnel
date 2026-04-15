@@ -140,7 +140,7 @@ PostDown = ip rule del from ${CLIENT_WG_IP} lookup 77 priority 77; ip route del 
 [Peer]
 PublicKey  = ${VPS_PUBLIC_KEY}
 Endpoint   = ${VPS_ENDPOINT}
-AllowedIPs = ${VPS_WG_IP}/32, 10.77.0.0/24
+AllowedIPs = 0.0.0.0/0
 PersistentKeepalive = 25
 EOF
 
