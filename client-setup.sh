@@ -114,32 +114,19 @@ load_env() {
     for var in VPS_PUBLIC_KEY VPS_ENDPOINT CLIENT_WG_IP PUBLIC_IP; do
         [[ -z "${!var:-}" ]] && error "Переменная $var не задана в $ENV_FILE"
     done
-
-    VPS_WG_IP="${CLIENT_WG_IP%.*}.1"
 }
 
 write_wg_config() {
     header "Настройка WireGuard"
 
-    local default_gw default_iface endpoint_host
-    default_gw=$(ip route | awk '/^default/ {print $3; exit}')
-    default_iface=$(ip route | awk '/^default/ {print $5; exit}')
-    endpoint_host="${VPS_ENDPOINT%%:*}"
-
-    [[ -z "$default_gw" || -z "$default_iface" ]] && error "Не удалось определить основной шлюз"
-
-    info "Основной шлюз: $default_gw (через $default_iface)"
-
     cat > "${WG_DIR}/${WG_IFACE}.conf" <<EOF
 [Interface]
-Address    = ${CLIENT_WG_IP}/24
+Address = ${CLIENT_WG_IP}/24
 PrivateKey = ${CLIENT_PRIVKEY}
-PostUp = ip rule add from ${CLIENT_WG_IP} lookup 77 priority 77; ip route add default via ${VPS_WG_IP} table 77; ip route replace ${endpoint_host}/32 via ${default_gw} dev ${default_iface}
-PostDown = ip rule del from ${CLIENT_WG_IP} lookup 77 priority 77; ip route del default via ${VPS_WG_IP} table 77 2>/dev/null || true; ip route del ${endpoint_host}/32 via ${default_gw} dev ${default_iface} 2>/dev/null || true
 
 [Peer]
-PublicKey  = ${VPS_PUBLIC_KEY}
-Endpoint   = ${VPS_ENDPOINT}
+PublicKey = ${VPS_PUBLIC_KEY}
+Endpoint = ${VPS_ENDPOINT}
 AllowedIPs = 0.0.0.0/0
 PersistentKeepalive = 25
 EOF
@@ -165,11 +152,10 @@ bring_up_tunnel() {
 check_connectivity() {
     header "Проверка связности"
 
-    if ping -c3 -W2 "$VPS_WG_IP" &>/dev/null; then
-        success "VPS доступен через туннель (${VPS_WG_IP})"
+    if wg show "$WG_IFACE" latest-handshakes 2>/dev/null | awk '{print $2}' | grep -qv '^0$'; then
+        success "Handshake с VPS установлен"
     else
-        warn "VPS не отвечает на ping. Проверь, что на VPS пир добавлен и активен"
-        warn "Команды для проверки на VPS: sudo bash vps-setup.sh list && sudo bash vps-setup.sh status"
+        warn "Handshake пока не установлен. Проверь, что пир добавлен на VPS и открыт UDP порт WireGuard"
     fi
 }
 
