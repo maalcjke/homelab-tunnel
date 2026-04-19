@@ -96,24 +96,28 @@ EOT
 }
 
 load_env() {
-    header "Конфигурация подключения"
+  header "Конфигурация подключения"
 
-    if [[ ! -f "$ENV_FILE" ]]; then
-        warn "Файл wg-client.env не найден: $ENV_FILE"
-        warn "Сначала сгенерируй/проверь публичный ключ и добавь пир на VPS"
-        write_env_example
-        print_next_step_help
-        exit 0
+  if [[ ! -f "$ENV_FILE" ]]; then
+    warn "Файл wg-client.env не найден: $ENV_FILE"
+    warn "Сначала сгенерируй/проверь публичный ключ и добавь пир на VPS"
+    write_env_example
+    print_next_step_help
+    exit 0
+  fi
+
+  info "Найден файл конфигурации: $ENV_FILE"
+  # shellcheck disable=SC1090
+  source "$ENV_FILE"
+  success "Загружено из файла"
+
+  for var in VPS_PUBLIC_KEY VPS_ENDPOINT CLIENT_WG_IP PUBLIC_IP; do
+    if [[ -z "${!var:-}" ]]; then
+      error "Переменная $var не задана в $ENV_FILE"
     fi
+  done
 
-    info "Найден файл конфигурации: $ENV_FILE"
-    # shellcheck disable=SC1090
-    source "$ENV_FILE"
-    success "Загружено из файла"
-
-    for var in VPS_PUBLIC_KEY VPS_ENDPOINT CLIENT_WG_IP PUBLIC_IP; do
-        [[ -z "${!var:-}" ]] && error "Переменная $var не задана в $ENV_FILE"
-    done
+  return 0
 }
 
 write_wg_config() {
